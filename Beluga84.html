@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ultimate Decimal Math AI</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 80px;
+            background: #f4f4f4;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 400px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 25px;
+            font-size: 24px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🧠 Ultimate Decimal Math AI</h1>
+<p>Addition (+) & Multiplication (*) with decimals</p>
+
+<input id="expression" placeholder="Enter 123.45+678.9 or 12.3*4.56">
+<button onclick="calculate()">Calculate</button>
+
+<div id="result"></div>
+
+<script>
+// ====== Helper: Add two decimal strings =====
+function addDecimalStrings(a, b) {
+    if (!a.includes('.')) a += '.0';
+    if (!b.includes('.')) b += '.0';
+
+    let [aInt, aFrac] = a.split('.');
+    let [bInt, bFrac] = b.split('.');
+
+    // Pad fractional parts
+    const maxFracLen = Math.max(aFrac.length, bFrac.length);
+    aFrac = aFrac.padEnd(maxFracLen, '0');
+    bFrac = bFrac.padEnd(maxFracLen, '0');
+
+    // Add fractional part
+    let fracSum = addStrings(aFrac, bFrac);
+    let carry = 0;
+    if (fracSum.length > maxFracLen) {
+        carry = parseInt(fracSum[0]);
+        fracSum = fracSum.slice(1);
+    }
+
+    // Add integer part with carry
+    let intSum = addStrings(aInt, bInt);
+    if (carry > 0) intSum = addStrings(intSum, carry.toString());
+
+    return intSum + '.' + fracSum.replace(/0+$/, '') || '0';
+}
+
+// ====== Helper: Multiply two decimal strings =====
+function multiplyDecimalStrings(a, b) {
+    const aDecLen = a.includes('.') ? a.split('.')[1].length : 0;
+    const bDecLen = b.includes('.') ? b.split('.')[1].length : 0;
+    const totalDecLen = aDecLen + bDecLen;
+
+    const aClean = a.replace('.', '');
+    const bClean = b.replace('.', '');
+    let prod = multiplyStrings(aClean, bClean);
+
+    if (totalDecLen === 0) return prod;
+    if (prod.length <= totalDecLen) prod = prod.padStart(totalDecLen + 1, '0');
+
+    const intPart = prod.slice(0, prod.length - totalDecLen);
+    const fracPart = prod.slice(prod.length - totalDecLen).replace(/0+$/, '') || '0';
+
+    return intPart + '.' + fracPart;
+}
+
+// ===== String-based integer addition =====
+function addStrings(a, b) {
+    let res = '';
+    let carry = 0;
+    a = a.split('').reverse();
+    b = b.split('').reverse();
+    let n = Math.max(a.length, b.length);
+
+    for (let i = 0; i < n; i++) {
+        let digitA = i < a.length ? parseInt(a[i]) : 0;
+        let digitB = i < b.length ? parseInt(b[i]) : 0;
+        let sum = digitA + digitB + carry;
+        carry = Math.floor(sum / 10);
+        res = (sum % 10) + res;
+    }
+
+    if (carry > 0) res = carry + res;
+    return res.replace(/^0+/, '') || '0';
+}
+
+// ===== String-based integer multiplication =====
+function multiplyStrings(num1, num2) {
+    let n1 = num1.length, n2 = num2.length;
+    let result = Array(n1 + n2).fill(0);
+
+    for (let i = n1 - 1; i >= 0; i--) {
+        for (let j = n2 - 1; j >= 0; j--) {
+            let mul = parseInt(num1[i]) * parseInt(num2[j]);
+            let sum = mul + result[i + j + 1];
+            result[i + j + 1] = sum % 10;
+            result[i + j] += Math.floor(sum / 10);
+        }
+    }
+
+    return result.join('').replace(/^0+/, '') || '0';
+}
+
+// ===== Main calculation =====
+function calculate() {
+    const expr = document.getElementById("expression").value.trim();
+    const resultDiv = document.getElementById("result");
+
+    const match = expr.match(/^(\d+(\.\d+)?)\s*([\+\*])\s*(\d+(\.\d+)?)$/);
+    if (!match) {
+        resultDiv.innerText = "Invalid input. Use format like 123.45+678.9 or 12.3*4.56";
+        return;
+    }
+
+    const a = match[1];
+    const op = match[3];
+    const b = match[4];
+
+    const min = '1';
+    if (parseFloat(a) < parseFloat(min) || parseFloat(b) < parseFloat(min)) {
+        resultDiv.innerText = "Numbers must be ≥ 1";
+        return;
+    }
+
+    resultDiv.innerText = "Thinking...";
+
+    setTimeout(() => {
+        let result;
+        if (op === '+') result = addDecimalStrings(a, b);
+        else if (op === '*') result = multiplyDecimalStrings(a, b);
+        else {
+            resultDiv.innerText = "Unsupported operator";
+            return;
+        }
+
+        resultDiv.innerText = "AI Prediction: " + result;
+    }, 500);
+}
+</script>
+
+</body>
+</html>
